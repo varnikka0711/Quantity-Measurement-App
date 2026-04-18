@@ -6,10 +6,12 @@ public class QuantityMeasurementApp {
         private double value;
         private LengthUnit unit;
 
-        // ENUM for units (base = inches)
+        // ENUM (base = inches)
         public enum LengthUnit {
             FEET(12.0),
-            INCHES(1.0);
+            INCHES(1.0),
+            YARDS(36.0),          // 1 yard = 36 inches
+            CENTIMETERS(0.393701); // 1 cm = 0.393701 inches
 
             private final double conversionFactor;
 
@@ -34,7 +36,7 @@ public class QuantityMeasurementApp {
             this.unit = unit;
         }
 
-        // Convert everything to base unit (inches)
+        // Convert to base unit (inches)
         private double toBaseUnit() {
             return this.value * this.unit.getConversionFactor();
         }
@@ -56,48 +58,52 @@ public class QuantityMeasurementApp {
         }
     }
 
-    // ----------- DEMO METHODS -----------
+    // ----------- GENERIC DEMO METHOD -----------
 
     public static boolean demonstrateLengthEquality(Length l1, Length l2) {
         return l1.equals(l2);
     }
 
-    public static void demonstrateFeetEquality() {
-        Length l1 = new Length(1.0, Length.LengthUnit.FEET);
-        Length l2 = new Length(1.0, Length.LengthUnit.FEET);
+    public static void demonstrateLengthComparison(double v1, Length.LengthUnit u1,
+                                                   double v2, Length.LengthUnit u2) {
 
-        System.out.println("Feet vs Feet: " + demonstrateLengthEquality(l1, l2));
-    }
+        Length l1 = new Length(v1, u1);
+        Length l2 = new Length(v2, u2);
 
-    public static void demonstrateInchesEquality() {
-        Length l1 = new Length(1.0, Length.LengthUnit.INCHES);
-        Length l2 = new Length(1.0, Length.LengthUnit.INCHES);
-
-        System.out.println("Inches vs Inches: " + demonstrateLengthEquality(l1, l2));
-    }
-
-    public static void demonstrateFeetInchesComparison() {
-        Length l1 = new Length(1.0, Length.LengthUnit.FEET);
-        Length l2 = new Length(12.0, Length.LengthUnit.INCHES);
-
-        System.out.println("Feet vs Inches: " + demonstrateLengthEquality(l1, l2));
+        System.out.println("Comparing: " + v1 + " " + u1 + " and " + v2 + " " + u2);
+        System.out.println("Result: " + demonstrateLengthEquality(l1, l2));
+        System.out.println();
     }
 
     // ----------- MAIN METHOD -----------
 
     public static void main(String[] args) {
 
-        demonstrateFeetEquality();          // true
-        demonstrateInchesEquality();        // true
-        demonstrateFeetInchesComparison();  // true
+        // Feet ↔ Inches
+        demonstrateLengthComparison(1.0, Length.LengthUnit.FEET,
+                                   12.0, Length.LengthUnit.INCHES);
 
-        // Extra tests
-        System.out.println("1 ft vs 2 ft: " +
-                new Length(1.0, Length.LengthUnit.FEET)
-                        .equals(new Length(2.0, Length.LengthUnit.FEET))); // false
+        // Yards ↔ Inches
+        demonstrateLengthComparison(1.0, Length.LengthUnit.YARDS,
+                                   36.0, Length.LengthUnit.INCHES);
 
-        System.out.println("12 in vs 1 ft: " +
-                new Length(12.0, Length.LengthUnit.INCHES)
-                        .equals(new Length(1.0, Length.LengthUnit.FEET))); // true
+        // CM ↔ Inches
+        demonstrateLengthComparison(100.0, Length.LengthUnit.CENTIMETERS,
+                                   39.3701, Length.LengthUnit.INCHES);
+
+        // Feet ↔ Yards
+        demonstrateLengthComparison(3.0, Length.LengthUnit.FEET,
+                                   1.0, Length.LengthUnit.YARDS);
+
+        // CM ↔ Feet
+        demonstrateLengthComparison(30.48, Length.LengthUnit.CENTIMETERS,
+                                   1.0, Length.LengthUnit.FEET);
+
+        // Extra checks
+        demonstrateLengthComparison(2.0, Length.LengthUnit.YARDS,
+                                   6.0, Length.LengthUnit.FEET);
+
+        demonstrateLengthComparison(1.0, Length.LengthUnit.CENTIMETERS,
+                                   1.0, Length.LengthUnit.FEET); // false
     }
 }
