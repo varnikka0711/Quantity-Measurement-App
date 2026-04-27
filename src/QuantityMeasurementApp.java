@@ -36,7 +36,11 @@ public class QuantityMeasurementApp {
     }
 
     private double toBaseInches() {
-        return round(this.value * this.unit.getFactor());
+        return value * unit.getFactor();
+    }
+
+    private static double round(double val) {
+        return Math.round(val * 100.0) / 100.0;
     }
 
     public QuantityMeasurementApp convertTo(LengthUnit targetUnit) {
@@ -48,8 +52,19 @@ public class QuantityMeasurementApp {
         return new QuantityMeasurementApp(round(converted), targetUnit);
     }
 
+    public QuantityMeasurementApp add(QuantityMeasurementApp other) {
+        if (other == null) {
+            throw new IllegalArgumentException("Other length cannot be null");
+        }
+
+        double sumInInches = this.toBaseInches() + other.toBaseInches();
+        double result = sumInInches / this.unit.getFactor();
+
+        return new QuantityMeasurementApp(round(result), this.unit);
+    }
+
     private boolean compare(QuantityMeasurementApp other) {
-        return Double.compare(this.toBaseInches(), other.toBaseInches()) == 0;
+        return Double.compare(round(this.toBaseInches()), round(other.toBaseInches())) == 0;
     }
 
     @Override
@@ -62,7 +77,7 @@ public class QuantityMeasurementApp {
 
     @Override
     public int hashCode() {
-        return Objects.hash(toBaseInches());
+        return Objects.hash(round(toBaseInches()));
     }
 
     @Override
@@ -70,14 +85,7 @@ public class QuantityMeasurementApp {
         return String.format("%.2f %s", value, unit);
     }
 
-    private static double round(double val) {
-        return Math.round(val * 100.0) / 100.0;
-    }
-
-    public static double convert(double value,
-                                 LengthUnit source,
-                                 LengthUnit target) {
-
+    public static double convert(double value, LengthUnit source, LengthUnit target) {
         if (!Double.isFinite(value)) {
             throw new IllegalArgumentException("Invalid value");
         }
@@ -87,7 +95,6 @@ public class QuantityMeasurementApp {
 
         double base = value * source.getFactor();
         double result = base / target.getFactor();
-
         return round(result);
     }
 
@@ -97,13 +104,6 @@ public class QuantityMeasurementApp {
             throw new IllegalArgumentException("Lengths cannot be null");
         }
         return l1.equals(l2);
-    }
-
-    public static boolean demonstrateLengthComparison(double v1, LengthUnit u1,
-                                                      double v2, LengthUnit u2) {
-        QuantityMeasurementApp l1 = new QuantityMeasurementApp(v1, u1);
-        QuantityMeasurementApp l2 = new QuantityMeasurementApp(v2, u2);
-        return demonstrateLengthEquality(l1, l2);
     }
 
     public static QuantityMeasurementApp demonstrateLengthConversion(double value,
@@ -121,10 +121,19 @@ public class QuantityMeasurementApp {
         return length.convertTo(toUnit);
     }
 
+    public static QuantityMeasurementApp demonstrateLengthAddition(QuantityMeasurementApp l1,
+                                                                   QuantityMeasurementApp l2) {
+        if (l1 == null || l2 == null) {
+            throw new IllegalArgumentException("Lengths cannot be null");
+        }
+        return l1.add(l2);
+    }
+
     public static void main(String[] args) {
-        System.out.println(convert(1.0, LengthUnit.FEET, LengthUnit.INCHES));
-        System.out.println(convert(3.0, LengthUnit.YARDS, LengthUnit.FEET));
-        System.out.println(convert(36.0, LengthUnit.INCHES, LengthUnit.YARDS));
-        System.out.println(convert(1.0, LengthUnit.CENTIMETERS, LengthUnit.INCHES));
+        QuantityMeasurementApp l1 = new QuantityMeasurementApp(1.0, LengthUnit.FEET);
+        QuantityMeasurementApp l2 = new QuantityMeasurementApp(12.0, LengthUnit.INCHES);
+
+        QuantityMeasurementApp result = demonstrateLengthAddition(l1, l2);
+        System.out.println(result); // Expected: 2.00 FEET
     }
 }
