@@ -52,15 +52,29 @@ public class QuantityMeasurementApp {
         return new QuantityMeasurementApp(round(converted), targetUnit);
     }
 
+    // UC6: default addition (result in this.unit)
     public QuantityMeasurementApp add(QuantityMeasurementApp other) {
         if (other == null) {
             throw new IllegalArgumentException("Other length cannot be null");
         }
-
         double sumInInches = this.toBaseInches() + other.toBaseInches();
         double result = sumInInches / this.unit.getFactor();
-
         return new QuantityMeasurementApp(round(result), this.unit);
+    }
+
+    // UC7: addition with explicit target unit
+    public QuantityMeasurementApp add(QuantityMeasurementApp other, LengthUnit targetUnit) {
+        if (other == null) {
+            throw new IllegalArgumentException("Other length cannot be null");
+        }
+        if (targetUnit == null) {
+            throw new IllegalArgumentException("Target unit cannot be null");
+        }
+
+        double sumInInches = this.toBaseInches() + other.toBaseInches();
+        double result = sumInInches / targetUnit.getFactor();
+
+        return new QuantityMeasurementApp(round(result), targetUnit);
     }
 
     private boolean compare(QuantityMeasurementApp other) {
@@ -85,6 +99,7 @@ public class QuantityMeasurementApp {
         return String.format("%.2f %s", value, unit);
     }
 
+    // Static conversion API (UC5)
     public static double convert(double value, LengthUnit source, LengthUnit target) {
         if (!Double.isFinite(value)) {
             throw new IllegalArgumentException("Invalid value");
@@ -109,8 +124,7 @@ public class QuantityMeasurementApp {
     public static QuantityMeasurementApp demonstrateLengthConversion(double value,
                                                                      LengthUnit from,
                                                                      LengthUnit to) {
-        double converted = convert(value, from, to);
-        return new QuantityMeasurementApp(converted, to);
+        return new QuantityMeasurementApp(convert(value, from, to), to);
     }
 
     public static QuantityMeasurementApp demonstrateLengthConversion(QuantityMeasurementApp length,
@@ -121,6 +135,7 @@ public class QuantityMeasurementApp {
         return length.convertTo(toUnit);
     }
 
+    // UC6 demo
     public static QuantityMeasurementApp demonstrateLengthAddition(QuantityMeasurementApp l1,
                                                                    QuantityMeasurementApp l2) {
         if (l1 == null || l2 == null) {
@@ -129,11 +144,22 @@ public class QuantityMeasurementApp {
         return l1.add(l2);
     }
 
+    // UC7 demo
+    public static QuantityMeasurementApp demonstrateLengthAddition(QuantityMeasurementApp l1,
+                                                                   QuantityMeasurementApp l2,
+                                                                   LengthUnit targetUnit) {
+        if (l1 == null || l2 == null) {
+            throw new IllegalArgumentException("Lengths cannot be null");
+        }
+        return l1.add(l2, targetUnit);
+    }
+
     public static void main(String[] args) {
         QuantityMeasurementApp l1 = new QuantityMeasurementApp(1.0, LengthUnit.FEET);
         QuantityMeasurementApp l2 = new QuantityMeasurementApp(12.0, LengthUnit.INCHES);
 
-        QuantityMeasurementApp result = demonstrateLengthAddition(l1, l2);
-        System.out.println(result); // Expected: 2.00 FEET
+        System.out.println(demonstrateLengthAddition(l1, l2, LengthUnit.FEET));   // 2.00 FEET
+        System.out.println(demonstrateLengthAddition(l1, l2, LengthUnit.INCHES)); // 24.00 INCHES
+        System.out.println(demonstrateLengthAddition(l1, l2, LengthUnit.YARDS));  // ~0.67 YARDS
     }
 }
