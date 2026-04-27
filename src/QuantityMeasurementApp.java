@@ -1,109 +1,130 @@
+package com.apps.quantitymeasurement;
+
+import java.util.Objects;
+
 public class QuantityMeasurementApp {
 
-    // ----------- GENERIC LENGTH CLASS -----------
-    static class Length {
+    private final double value;
+    private final LengthUnit unit;
 
-        private double value;
-        private LengthUnit unit;
+    public enum LengthUnit {
+        INCHES(1.0),
+        FEET(12.0),
+        YARDS(36.0),
+        CENTIMETERS(0.393701);
 
-        // ENUM (base = inches)
-        public enum LengthUnit {
-            FEET(12.0),
-            INCHES(1.0),
-            YARDS(36.0),          // 1 yard = 36 inches
-            CENTIMETERS(0.393701); // 1 cm = 0.393701 inches
+        private final double factorToInches;
 
-            private final double conversionFactor;
-
-            LengthUnit(double conversionFactor) {
-                this.conversionFactor = conversionFactor;
-            }
-
-            public double getConversionFactor() {
-                return conversionFactor;
-            }
+        LengthUnit(double factorToInches) {
+            this.factorToInches = factorToInches;
         }
 
-        // Constructor
-        public Length(double value, LengthUnit unit) {
-            if (Double.isNaN(value)) {
-                throw new IllegalArgumentException("Value must be numeric");
-            }
-            if (unit == null) {
-                throw new IllegalArgumentException("Unit cannot be null");
-            }
-            this.value = value;
-            this.unit = unit;
-        }
-
-        // Convert to base unit (inches)
-        private double toBaseUnit() {
-            return this.value * this.unit.getConversionFactor();
-        }
-
-        // Compare logic
-        public boolean compare(Length other) {
-            return Double.compare(this.toBaseUnit(), other.toBaseUnit()) == 0;
-        }
-
-        // equals override
-        @Override
-        public boolean equals(Object obj) {
-            if (this == obj) return true;
-            if (obj == null) return false;
-            if (getClass() != obj.getClass()) return false;
-
-            Length other = (Length) obj;
-            return compare(other);
+        public double getFactor() {
+            return factorToInches;
         }
     }
 
-    // ----------- GENERIC DEMO METHOD -----------
+    public QuantityMeasurementApp(double value, LengthUnit unit) {
+        if (!Double.isFinite(value)) {
+            throw new IllegalArgumentException("Invalid value");
+        }
+        if (unit == null) {
+            throw new IllegalArgumentException("Unit cannot be null");
+        }
+        this.value = value;
+        this.unit = unit;
+    }
 
-    public static boolean demonstrateLengthEquality(Length l1, Length l2) {
+    private double toBaseInches() {
+        return round(this.value * this.unit.getFactor());
+    }
+
+    public QuantityMeasurementApp convertTo(LengthUnit targetUnit) {
+        if (targetUnit == null) {
+            throw new IllegalArgumentException("Target unit cannot be null");
+        }
+        double inches = toBaseInches();
+        double converted = inches / targetUnit.getFactor();
+        return new QuantityMeasurementApp(round(converted), targetUnit);
+    }
+
+    private boolean compare(QuantityMeasurementApp other) {
+        return Double.compare(this.toBaseInches(), other.toBaseInches()) == 0;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof QuantityMeasurementApp)) return false;
+        QuantityMeasurementApp that = (QuantityMeasurementApp) o;
+        return compare(that);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(toBaseInches());
+    }
+
+    @Override
+    public String toString() {
+        return String.format("%.2f %s", value, unit);
+    }
+
+    private static double round(double val) {
+        return Math.round(val * 100.0) / 100.0;
+    }
+
+    public static double convert(double value,
+                                 LengthUnit source,
+                                 LengthUnit target) {
+
+        if (!Double.isFinite(value)) {
+            throw new IllegalArgumentException("Invalid value");
+        }
+        if (source == null || target == null) {
+            throw new IllegalArgumentException("Units cannot be null");
+        }
+
+        double base = value * source.getFactor();
+        double result = base / target.getFactor();
+
+        return round(result);
+    }
+
+    public static boolean demonstrateLengthEquality(QuantityMeasurementApp l1,
+                                                    QuantityMeasurementApp l2) {
+        if (l1 == null || l2 == null) {
+            throw new IllegalArgumentException("Lengths cannot be null");
+        }
         return l1.equals(l2);
     }
 
-    public static void demonstrateLengthComparison(double v1, Length.LengthUnit u1,
-                                                   double v2, Length.LengthUnit u2) {
-
-        Length l1 = new Length(v1, u1);
-        Length l2 = new Length(v2, u2);
-
-        System.out.println("Comparing: " + v1 + " " + u1 + " and " + v2 + " " + u2);
-        System.out.println("Result: " + demonstrateLengthEquality(l1, l2));
-        System.out.println();
+    public static boolean demonstrateLengthComparison(double v1, LengthUnit u1,
+                                                      double v2, LengthUnit u2) {
+        QuantityMeasurementApp l1 = new QuantityMeasurementApp(v1, u1);
+        QuantityMeasurementApp l2 = new QuantityMeasurementApp(v2, u2);
+        return demonstrateLengthEquality(l1, l2);
     }
 
-    // ----------- MAIN METHOD -----------
+    public static QuantityMeasurementApp demonstrateLengthConversion(double value,
+                                                                     LengthUnit from,
+                                                                     LengthUnit to) {
+        double converted = convert(value, from, to);
+        return new QuantityMeasurementApp(converted, to);
+    }
+
+    public static QuantityMeasurementApp demonstrateLengthConversion(QuantityMeasurementApp length,
+                                                                     LengthUnit toUnit) {
+        if (length == null) {
+            throw new IllegalArgumentException("Length cannot be null");
+        }
+        return length.convertTo(toUnit);
+    }
 
     public static void main(String[] args) {
-
-        // Feet ↔ Inches
-        demonstrateLengthComparison(1.0, Length.LengthUnit.FEET,
-                                   12.0, Length.LengthUnit.INCHES);
-
-        // Yards ↔ Inches
-        demonstrateLengthComparison(1.0, Length.LengthUnit.YARDS,
-                                   36.0, Length.LengthUnit.INCHES);
-
-        // CM ↔ Inches
-        demonstrateLengthComparison(100.0, Length.LengthUnit.CENTIMETERS,
-                                   39.3701, Length.LengthUnit.INCHES);
-
-        // Feet ↔ Yards
-        demonstrateLengthComparison(3.0, Length.LengthUnit.FEET,
-                                   1.0, Length.LengthUnit.YARDS);
-
-        // CM ↔ Feet
-        demonstrateLengthComparison(30.48, Length.LengthUnit.CENTIMETERS,
-                                   1.0, Length.LengthUnit.FEET);
-
-        // Extra checks
-        demonstrateLengthComparison(2.0, Length.LengthUnit.YARDS,
-                                   6.0, Length.LengthUnit.FEET);
-
-        demonstrateLengthComparison(1.0, Length.LengthUnit.CENTIMETERS,
-                                   1.0, Length.LengthUnit.FEET); // false
+        System.out.println(convert(1.0, LengthUnit.FEET, LengthUnit.INCHES));
+        System.out.println(convert(3.0, LengthUnit.YARDS, LengthUnit.FEET));
+        System.out.println(convert(36.0, LengthUnit.INCHES, LengthUnit.YARDS));
+        System.out.println(convert(1.0, LengthUnit.CENTIMETERS, LengthUnit.INCHES));
     }
 }
